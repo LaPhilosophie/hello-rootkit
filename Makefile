@@ -1,4 +1,4 @@
-TARGET=lkm
+TARGET=rootkit
 OBJ=$(TARGET).o
 MODULE=$(TARGET).ko
 obj-m+=$(OBJ)
