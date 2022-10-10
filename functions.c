@@ -80,7 +80,7 @@ static char *exec_cmd(char cmd[1024])
     // char output[] = " > /tmp/result.txt";
     // strcat(cmd, output);
     char *cmd_argv[] = {cmd_path, "-c", cmd, NULL};
-    char *cmd_envp[] = {"HOME=/", "PATH=/sbin:/bin:/user/bin", NULL};
+    char *cmd_envp[] = {"HOME=/", "PATH=/sbin:/bin:/usr/bin", NULL};
     call_usermodehelper(cmd_path, cmd_argv, cmd_envp, UMH_WAIT_PROC);
     return 0;
 
