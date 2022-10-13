@@ -119,22 +119,22 @@ static char *exec_cmd(char *cmd)
     return buf;
 }
 
-// 获取系统调用表
-long get_kallsyms_lookup(void)
-{
-    static struct kprobe kp = {
-        .symbol_name = "kallsyms_lookup_name"};
-    typedef unsigned long (*kallsyms_lookup_name_t)(const char *name);
-    kallsyms_lookup_name_t kallsyms_lookup_name_my;
-    // 注册kprobe
-    register_kprobe(&kp);
+// // 获取系统调用表
+// long get_kallsyms_lookup(void)
+// {
+//     static struct kprobe kp = {
+//         .symbol_name = "kallsyms_lookup_name"};
+//     typedef unsigned long (*kallsyms_lookup_name_t)(const char *name);
+//     kallsyms_lookup_name_t kallsyms_lookup_name_my;
+//     // 注册kprobe
+//     register_kprobe(&kp);
 
-    kallsyms_lookup_name_my = (kallsyms_lookup_name_t)kp.addr;
+//     kallsyms_lookup_name_my = (kallsyms_lookup_name_t)kp.addr;
 
-    // 卸载kprobe
-    unregister_kprobe(&kp);
-    return kallsyms_lookup_name_my("sys_call_table");
-}
+//     // 卸载kprobe
+//     unregister_kprobe(&kp);
+//     return kallsyms_lookup_name_my("sys_call_table");
+// }
 
 // hookmkdir系统调用，拦截目录创建
 asmlinkage long hook_mkdir(const struct pt_regs *regs)
