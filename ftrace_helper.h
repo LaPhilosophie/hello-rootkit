@@ -58,7 +58,7 @@ void get_kallsyms_lookup_name(void)
     // 卸载kprobe
     unregister_kprobe(&kp);
 }
-endif
+#endif
 #define USE_FENTRY_OFFSET 0
 #if !USE_FENTRY_OFFSET
 #pragma GCC optimize("-fno-optimize-sibling-calls")
