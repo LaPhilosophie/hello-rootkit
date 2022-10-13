@@ -14,7 +14,7 @@
 #define PTREGS_SYSCALL_STUBS 1
 #endif
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 7, 0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 7, 0)
 #define BRUTEFORCE_KADDR 1
 #include <linux/kprobes.h>
 static struct kprobe kp = {
@@ -47,6 +47,7 @@ kallsyms_lookup_name_t kallsyms_lookup_name_my;
  * protection and implement our own).
  * */
 
+#ifdef BRUTEFORCE_KADDR
 void get_kallsyms_lookup_name(void)
 {
     // 注册kprobe
@@ -57,6 +58,7 @@ void get_kallsyms_lookup_name(void)
     // 卸载kprobe
     unregister_kprobe(&kp);
 }
+endif
 #define USE_FENTRY_OFFSET 0
 #if !USE_FENTRY_OFFSET
 #pragma GCC optimize("-fno-optimize-sibling-calls")
