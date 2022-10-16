@@ -1,3 +1,9 @@
 {
-    "C_Cpp.default.configurationProvider": "ms-vscode.makefile-tools"
+    "C_Cpp.default.configurationProvider": "ms-vscode.makefile-tools",
+    "files.associations": {
+        "module.h": "c",
+        "device.h": "c",
+        "fs.h": "c",
+        "kobject.h": "c"
+    }
 }
