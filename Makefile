@@ -1,5 +1,5 @@
 TARGET=rootkit
-OBJ=$(TARGET).o
+OBJ=$(TARGET).o 
 MODULE=$(TARGET).ko
 obj-m+=$(OBJ)
 
@@ -16,6 +16,7 @@ rootkit:
 install:
 # 安装模块
 	@sudo insmod $(CURRENT_PATH)/$(MODULE)
+uninstall:
 # 卸载模块
 	@sudo rmmod $(CURRENT_PATH)/$(MODULE)
 # @modprobe -r $(TARGET)

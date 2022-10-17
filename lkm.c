@@ -112,7 +112,7 @@ static void __exit lkm_example_exit(void)
 
 static int __init mod_init(void)
 {
-    printk(KERN_ALERT "Module install successful!!!\n");
+    printk(KERN_ALERT "Module install successful##!\n");
     return 0;
 }
 
