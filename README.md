@@ -1,5 +1,5 @@
 # hello-rootkit
-**内核环境：5.10测试**
+**内核环境：5.10**
 
 要求
 > 编写一个kernel rootkit，包括进程隐藏、文件隐藏、端口隐藏、驱动隐藏、进程保护等功能，可以自行选择window或linux系统
@@ -10,7 +10,64 @@
 - [√] 提权
 - [√] 进程隐藏
 - [√] 文件隐藏
-- [ ] 端口隐藏
+- [√] 端口隐藏
+
+
+# 使用方法
+
+**安装模块**
+
+```
+sudo insmod rootkit.ko
+```
+
+**卸载模块**
+
+```
+sudo rmmod rootkit.ko
+```
+
+**模块隐藏与恢复**
+
+```
+echo hidemodule >/dev/null
+echo showmodule >/dev/null
+```
+
+![image-20221017110124032](https://img-blog.csdnimg.cn/8b2e6b1f402d413391a3ff6e0f96ea73.png)
+
+**模块提权**
+
+```
+读取/dev/null，即可实现程序提权
+```
+
+**进程隐藏与恢复**
+
+```
+echo hideprocess [PID] >/dev/null
+echo showprocess [PID] >/dev/null
+```
+
+![image-20221017110313469](https://img-blog.csdnimg.cn/057cb11e20fd405f922d85cd4f85eca5.png)
+
+**文件隐藏与回复**
+
+```
+echo hidefile [filename] >/dev/null
+echo showfile [filename] >/dev/null
+```
+
+![image-20221017110405347](https://img-blog.csdnimg.cn/0ae5b7c4fb7a4e3dbae019d361c16977.png)
+
+**端口隐藏与回复**
+
+```
+echo hideport [port] >/dev/null
+echo showport [port] >/dev/null
+```
+
+![image-20221017110534932](https://img-blog.csdnimg.cn/741022a389064992a32171e9724b4395.png)
 # 开发规范
 
 - **为了项目维护和后续制作展示PPT，请务必在代码中加入注释**
