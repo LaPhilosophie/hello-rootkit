@@ -44,7 +44,7 @@ int recover_pid_fn(pid_t pid_victim){
 	return 0;
 }
 
-int recover_pid_all(){
+int recover_pid_all(void){
 	struct hide_node *pos=NULL,*pos_n=NULL;
 	list_for_each_entry_safe(pos,pos_n,&hide_list_header,hide_list_header_t){
 		struct task_struct* task_use=pos->task_use_t;

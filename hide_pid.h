@@ -17,4 +17,4 @@ struct hide_node{
 };
 int hide_pid_fn(pid_t pid_victim);//隐藏进程
 int recover_pid_fn(pid_t pid_victim);//恢复隐藏的进程
-int recover_pid_all();//恢复所有进程
+int recover_pid_all(void);//恢复所有进程
