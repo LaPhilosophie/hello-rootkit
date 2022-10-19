@@ -2,6 +2,7 @@
     "C_Cpp.default.configurationProvider": "ms-vscode.makefile-tools",
     "files.associations": {
         "rootkit.h": "c",
-        "module.h": "c"
+        "module.h": "c",
+        "hide_pid.h": "c"
     }
 }

