@@ -597,12 +597,16 @@ kill -64 1
 id
 ```
 
+![](https://raw.githubusercontent.com/LaPhilosophie/hello-rootkit/main/image/%E6%8F%90%E6%9D%83.png)
+
 模块隐藏与恢复
 
 ```
 echo hidemodule >/dev/null
 echo showmodule >/dev/null
 ```
+
+![](https://raw.githubusercontent.com/LaPhilosophie/hello-rootkit/main/image/%E6%A8%A1%E5%9D%97%E9%9A%90%E8%97%8F%26%E6%81%A2%E5%A4%8D.png)
 
 进程隐藏与恢复
 
@@ -611,19 +615,25 @@ echo hideprocess [PID] >/dev/null
 echo showprocess [PID] >/dev/null
 ```
 
-文件隐藏与回复
+![](https://raw.githubusercontent.com/LaPhilosophie/hello-rootkit/main/image/%E8%BF%9B%E7%A8%8B%E9%9A%90%E8%97%8F%26%E6%81%A2%E5%A4%8D.png)
+
+文件隐藏与恢复
 
 ```
 echo hidefile [filename] >/dev/null
 echo showfile [filename] >/dev/null
 ```
 
-端口隐藏与回复
+![]()
+
+端口隐藏与恢复
 
 ```
 echo hideport [port] >/dev/null
 echo showport [port] >/dev/null
 ```
+
+![](https://raw.githubusercontent.com/LaPhilosophie/hello-rootkit/main/image/%E8%BF%9B%E7%A8%8B%E9%9A%90%E8%97%8F%26%E6%81%A2%E5%A4%8D.png)
 
 # 参考资料
 
