@@ -1,9 +1,6 @@
 # hello-rootkit
 
-要求
-> 编写一个kernel rootkit，包括进程隐藏、文件隐藏、端口隐藏、驱动隐藏、进程保护等功能，可以自行选择window或linux系统
-
-# 进度
+# 功能
 
 - [x] 模块隐藏
 - [x] 提权
@@ -28,7 +25,7 @@
 rootkit与内核版本是强相关的，只可以在固定的内核上运行。内核版本号可以通过`uname -r`查看，如果内核版本号低，可以使用[apt的包进行升级](https://askubuntu.com/questions/187502/how-do-i-use-apt-get-to-update-to-the-latest-kernel)，如果过高可以自行搜索kernel downgrade的方法
 
 - 内核版本：5.4.0-126-generic
-- 开发工具：建议 vscode + ssh remote 到虚拟机，并使用虚拟机快照，当rootkit将环境搞崩之后可以快速恢复
+- 开发工具：建议 vscode + ssh remote 到虚拟机，并使用虚拟机**快照**，当rootkit将环境搞崩之后可以快速恢复
 
 ## 运行rootkit
 - `git clone`仓库到本地
@@ -161,7 +158,7 @@ fh_install_hooks(hooks, ARRAY_SIZE(hooks));
 fh_remove_hooks(hooks, ARRAY_SIZE(hooks));
 ```
 
-在某些内核版本中，`/proc/kallsyms`文件存储了系统调用吧和系统调用的地址信息，我们可以使用命令行获取：
+在某些内核版本中，`/proc/kallsyms`文件存储了系统调用和系统调用的地址信息，我们可以使用命令行获取：
 
 ```c
 cat /proc/kallsyms | grep xxx
