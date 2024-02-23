@@ -8,39 +8,28 @@
 - [x] 进程隐藏
 - [x] 端口隐藏
 
-# 开发规范
-
-- **务必在代码中加入注释**
-- kernel5.10分支支持5.10.0内核，main支持5.4.0内核
-- 每次使用`git push`将本地代码推送到远程之前，先运行`git pull`或者`git fetch`命令处理冲突
-- `git commit` 要对推送的内容有所说明
-- 参与开发的同学将会被加入仓库的`collaborators`，获得仓库的访问权限。关于在github上进行多人合作的[参考](https://blog.csdn.net/sculpta/article/details/104448310)
-
-
 # 开发说明
 
-## 贡献
-经本地测试后push到仓库对应的分支
 ## 开发环境
-rootkit与内核版本是强相关的，只可以在固定的内核上运行。内核版本号可以通过`uname -r`查看，如果内核版本号低，可以使用[apt的包进行升级](https://askubuntu.com/questions/187502/how-do-i-use-apt-get-to-update-to-the-latest-kernel)，如果过高可以自行搜索kernel downgrade的方法
+rootkit与内核版本是强相关的，只可以在固定的内核上运行。内核版本号可以通过`uname -r`查看，如果内核版本号低，可以使用[apt的包进行升级](https://askubuntu.com/questions/187502/how-do-i-use-apt-get-to-update-to-the-latest-kernel)，如果过高可以自行搜索`kernel downgrade`的方法
 
-- 内核版本：5.4.0-126-generic
-- 开发工具：建议 vscode + ssh remote 到虚拟机，并使用虚拟机**快照**，当rootkit将环境搞崩之后可以快速恢复
+- 内核版本：`5.4.0-126-generic`
+- 开发工具：建议 `vscode` + `ssh remote` 到虚拟机，并使用虚拟机**快照**，当rootkit将环境搞崩之后可以快速恢复
 
 ## 运行rootkit
 - `git clone`仓库到本地
-- cd到项目根目录，运行make，生成目标文件
+- cd到项目根目录，运行`make`，生成目标文件
 - 执行`make install`安装模块
 
-具体细节参见项目Makefile的编写
+具体细节参见项目`Makefile`的编写
 
 # 技术文档
 
 ## overview
 
-rootkit是一种恶意软件，攻击者可以在获得 root 或管理员权限后安装它，从而**隐藏入侵并保持root权限访问**。rootkit可以使用户级的，也可以是内核级的。关于rootkit的详细介绍可以参考https://en.wikipedia.org/wiki/rootkit
+rootkit是一种恶意软件，攻击者可以在获得 root 或管理员权限后安装它，从而**隐藏入侵并保持root权限访问**。rootkit可以是用户级的，也可以是内核级的。关于rootkit的详细介绍可以参考https://en.wikipedia.org/wiki/rootkit
 
-有许多技术可以实现rootkit，本项目使用的是通过编写LKM（Linux kernel module）并hook系统调用表的方式。这种方式具有诸多优点，比如rootkit作为内核模块可以动态的加载和卸载，大多数rootkit也都是通过LKM的方式实现的
+有许多技术可以实现rootkit，本项目使用的是通过编写LKM（Linux kernel module）并hook系统调用表的方式。这种方式具有诸多优点，比如，rootkit作为内核模块可以动态的加载和卸载。大多数rootkit也都是通过LKM的方式实现的
 
 ## LKM
 
